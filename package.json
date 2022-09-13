@@ -4,7 +4,12 @@
   "description": "A simple cache using 'WeakRef' to store cached values.",
   "main": "dist/weak-cache.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "make",
+    "lint": "make lint",
+    "lint:fix": "make lint-fix",
+    "test": "make test",
+    "preversion": "make test && make lint",
+    "postversion": "git push upstream v${npm_package_version}"
   },
   "keywords": [],
   "author": "Zane Rockenbaugh <zane@liquid-labs.com>",
