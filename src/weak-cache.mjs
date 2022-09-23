@@ -16,6 +16,9 @@ const WeakCache = class {
   * A callback handler (usually) called whenever an cache value is gargbage collected.
   */
   #globalFinalizationCallback
+  /**
+  * See `constructor.primitivesAlwaysHard`.
+  */
   #primitivesAlwaysHard
   /**
   * A reference to the interval cleanup timer. May be `undefined`.
