@@ -1,16 +1,46 @@
+/**
+* WeakCache implements a cache with weakly referenced _values_. Therefore, values in the cache can be garbage
+* collected. Note, however, that _keys_ are not weakly referenced and using an object as a key will keep that object
+* in scope and prevent it from being gc'ed.
+*
+* When using WeakCacheh with a cleanup interval (see constructor), you must be sure and call `WeakMap.release()` in
+* order to exit the main thread. If `release()` is not called, your process will likely hang on exit.
+*/
+
 const WeakCache = class {
+  /**
+  * Underlying Map holding cached values.
+  */
   #cache
+  /**
+  * A callback handler (usually) called whenever an cache value is gargbage collected.
+  */
   #globalFinalizationCallback
+  /**
+  * A reference to the interval cleanup timer. May be `undefined`.
+  */
   #intervalRef
+  /**
+  * Caches the size (i.e., number of keys) in the cache.
+  */
   #size
 
-  #iterator
-
+  /**
+  * Creates a WeakCache.
+  *
+  * #### Parameters
+  *
+  * - `globalFinalizationCallback`: callback which (usually) will be called when a value is gc'ed.
+  * - `cleanupInterval`: time in milliseconds between 'clean up' attempts. Default to 60 sec. Passing in `false` (and
+  *    only `false`) will cause the cache to rely on external management.
+  */
   constructor({ globalFinalizationCallback, cleanupInterval = 60 * 1000 } = {}) {
     this.#cache = new Map()
     this.#globalFinalizationCallback = globalFinalizationCallback
 
-    this.#intervalRef = setInterval(() => this._cleanUp(), cleanupInterval)
+    if (cleanupInterval !== false) {
+      this.#intervalRef = setInterval(() => this._cleanUp(), cleanupInterval)
+    }
 
     this.#size = 0
   }
@@ -88,7 +118,7 @@ const WeakCache = class {
     return this.#cache.keys()
   }
 
-  /*
+  /* Why doesn't this work?
   [Symbol.iterator] () {
     // return new WeakCacheIterator(this)
     this.#iterator = new WeakCacheIterator(this)
@@ -96,7 +126,9 @@ const WeakCache = class {
   } */
 
   release() {
-    clearInterval(this.#intervalRef)
+    if (this.#intervalRef) {
+      clearInterval(this.#intervalRef)
+    }
   }
 
   // TODO: add support for private methods and make this private
