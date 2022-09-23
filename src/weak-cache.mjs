@@ -16,6 +16,7 @@ const WeakCache = class {
   * A callback handler (usually) called whenever an cache value is gargbage collected.
   */
   #globalFinalizationCallback
+  #primitivesAlwaysHard
   /**
   * A reference to the interval cleanup timer. May be `undefined`.
   */
@@ -30,13 +31,15 @@ const WeakCache = class {
   *
   * #### Parameters
   *
-  * - `globalFinalizationCallback`: callback which (usually) will be called when a value is gc'ed.
   * - `cleanupInterval`: time in milliseconds between 'clean up' attempts. Default to 60 sec. Passing in `false` (and
   *    only `false`) will cause the cache to rely on external management.
+  * - `globalFinalizationCallback`: callback which (usually) will be called when a value is gc'ed.
+  * - `primitivesAlwaysHard`: if `true`, then primitives are always saved as a 'hard' reference. Otherwise, and by default, primitive values are 'wrapped' enabling the cache entry to be cleared by gc.
   */
-  constructor({ globalFinalizationCallback, cleanupInterval = 60 * 1000 } = {}) {
+  constructor({ globalFinalizationCallback, cleanupInterval = 60 * 1000, primitivesAlwaysHard = false } = {}) {
     this.#cache = new Map()
     this.#globalFinalizationCallback = globalFinalizationCallback
+    this.#primitivesAlwaysHard = primitivesAlwaysHard
 
     if (cleanupInterval !== false) {
       this.#intervalRef = setInterval(() => this._cleanUp(), cleanupInterval)
@@ -45,7 +48,15 @@ const WeakCache = class {
     this.#size = 0
   }
 
-  put(key, value, { finalizationCallback } = {}) {
+  /**
+  * Adds or update a value in the cache.
+  *
+  * #### Arguments
+  *
+  * - `key`: the key used to retrieve the cache value. May be anything
+  * - `value`: the value to hold. Can be anyithng.
+  */
+  put(key, value, { finalizationCallback, hardRef = false } = {}) {
     if (key === undefined) {
       throw new Error("WeakCache does not support 'undefined' keys.")
     }
@@ -54,7 +65,9 @@ const WeakCache = class {
 
     try {
       const valueType = typeof value
-      if (valueType === 'object' || valueType === 'function') {
+      const isPrimitive = !(valueType === 'object' || valueType === 'function' || value === null)
+      
+      if (hardRef !== true && !isPrimitive) {
         if (finalizationCallback !== undefined || this.#globalFinalizationCallback !== undefined) {
           const globalFinalizationCallback = this.#globalFinalizationCallback
           const fc = finalizationCallback !== undefined && this.#globalFinalizationCallback !== undefined
@@ -67,8 +80,12 @@ const WeakCache = class {
 
         this.#cache.set(key, { isRef : true, value : new WeakRef(value) })
       }
-      else {
+      else if (hardRef === true
+                || (isPrimitive && this.#primitivesAlwaysHard === true)) { // 'isPrimitive' redundant; clarifies
         this.#cache.set(key, { isRef : false, value : value })
+      }
+      else { // it's a primitive value but we want it weakly reffed.
+        this.#cache.set(key, { isRef : true, isPrimitive: true, value : new WeakRef({ value }) })
       }
 
       return value
@@ -96,9 +113,13 @@ const WeakCache = class {
     const valueSpec = this.#cache.get(key)
     if (valueSpec === undefined) return undefined
 
-    return valueSpec.isRef
+    const object = valueSpec.isRef
       ? valueSpec.value.deref()
       : valueSpec.value
+
+    return valueSpec.isPrimitive === true
+      ? object.value
+      : object
   }
 
   has(key) { return this.#cache.has(key) }
