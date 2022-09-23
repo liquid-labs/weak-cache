@@ -1,6 +1,6 @@
 {
   "name": "@liquid-labs/weak-cache",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "A simple cache using 'WeakRef' to store cached values.",
   "main": "dist/weak-cache.js",
   "scripts": {
