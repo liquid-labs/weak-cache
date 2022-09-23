@@ -12,3 +12,4 @@
 * _**hotfix**_: added support for 'hardRef' entries and 'primitivesAlwaysHard' option _(zane@liquid-labs.com; 2022-09-23T17:29:49.000Z)_
 * _**hotfix**_: updated inline docs _(zane@liquid-labs.com; 2022-09-23T17:31:56.000Z)_
 * _**hotfix**_: lint fixes _(zane@liquid-labs.com; 2022-09-23T17:32:55.000Z)_
+* _**hotfix**_: updated CHANGELOGE.md for release (by liq) _(zane@liquid-labs.com; 2022-09-23T17:33:14.000Z)_
