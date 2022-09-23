@@ -69,7 +69,7 @@ const WeakCache = class {
     try {
       const valueType = typeof value
       const isPrimitive = !(valueType === 'object' || valueType === 'function' || value === null)
-      
+
       if (hardRef !== true && !isPrimitive) {
         if (finalizationCallback !== undefined || this.#globalFinalizationCallback !== undefined) {
           const globalFinalizationCallback = this.#globalFinalizationCallback
@@ -88,7 +88,7 @@ const WeakCache = class {
         this.#cache.set(key, { isRef : false, value : value })
       }
       else { // it's a primitive value but we want it weakly reffed.
-        this.#cache.set(key, { isRef : true, isPrimitive: true, value : new WeakRef({ value }) })
+        this.#cache.set(key, { isRef : true, isPrimitive : true, value : new WeakRef({ value }) })
       }
 
       return value
